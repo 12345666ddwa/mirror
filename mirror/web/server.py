@@ -85,7 +85,7 @@ class MirrorHandler(BaseHTTPRequestHandler):
                 self._json({"error": "No key"}, 400)
 
     def _serve_dashboard(self):
-        dp = Path(__file__).parent.parent.parent / "index.html"
+        dp = Path(__file__).parent.parent.parent / "dashboard.html"
         if dp.exists():
             self.send_response(200)
             self.send_header("Content-Type", "text/html; charset=utf-8")
