@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>赛镜 Mirror · 个人仪表盘</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap');
+  *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+
+  :root{
+    --bg:#0f0e0d;--bg-card:#1a1816;--bg-hover:#24211e;
+    --text:#e8e4dd;--text-dim:#8a8580;--text-muted:#5c5752;
+    --gold:#c8945a;--gold-bright:#e8b87a;--gold-bg:rgba(200,148,90,0.1);
+    --green:#5eab7c;--red:#d4726a;--blue:#7b9cd4;--purple:#a089c4;
+    --border:rgba(255,255,255,0.05);--radius:12px;
+  }
+
+  body{
+    background:var(--bg);color:var(--text);
+    font-family:'Inter',-apple-system,sans-serif;line-height:1.6;
+    min-height:100vh;
+  }
+
+  /* Layout */
+  .app{display:flex;min-height:100vh}
+  .sidebar{
+    width:240px;background:var(--bg-card);border-right:1px solid var(--border);
+    padding:1.5rem;display:flex;flex-direction:column;gap:2rem;
+  }
+  .logo{
+    font-family:'Noto Serif SC',Georgia,serif;font-size:1.3rem;font-weight:700;
+    color:var(--gold);letter-spacing:.03em;
+  }
+  .logo span{font-size:.75rem;color:var(--text-dim);font-weight:400;margin-left:.5rem}
+  .nav{display:flex;flex-direction:column;gap:.3rem}
+  .nav a{
+    color:var(--text-dim);text-decoration:none;padding:.6rem .75rem;border-radius:8px;
+    font-size:.9rem;transition:all .15s;display:flex;align-items:center;gap:.6rem;
+  }
+  .nav a:hover,.nav a.active{background:var(--bg-hover);color:var(--text)}
+  .nav a .badge{
+    margin-left:auto;background:var(--gold-bg);color:var(--gold);
+    font-size:.7rem;padding:.1rem .5rem;border-radius:99px;
+  }
+  .sidebar-footer{border-top:1px solid var(--border);padding-top:1rem;font-size:.8rem;color:var(--text-muted)}
+
+  .main{flex:1;padding:2rem;overflow-y:auto;max-height:100vh}
+
+  /* Header */
+  .header{display:flex;justify-content:space-between;align-items:center;margin-bottom:2rem}
+  .header h1{font-family:'Noto Serif SC',Georgia,serif;font-size:1.8rem;font-weight:600}
+  .header .date{color:var(--text-dim);font-size:.9rem}
+  .demo-badge{
+    padding:.3rem .8rem;background:var(--gold-bg);color:var(--gold);
+    border-radius:99px;font-size:.75rem;font-weight:500;
+  }
+
+  /* Stat cards */
+  .stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:2rem}
+  .stat-card{
+    background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);
+    padding:1.25rem;
+  }
+  .stat-card .label{font-size:.8rem;color:var(--text-dim);margin-bottom:.25rem}
+  .stat-card .value{font-size:2rem;font-weight:600;font-family:'Noto Serif SC',Georgia,serif}
+  .stat-card .sub{font-size:.75rem;color:var(--text-muted);margin-top:.25rem}
+  .trend-up{color:var(--green)}.trend-down{color:var(--red)}
+
+  /* Sections */
+  .section{margin-bottom:2rem}
+  .section-title{
+    font-family:'Noto Serif SC',Georgia,serif;font-size:1.15rem;font-weight:600;
+    margin-bottom:1rem;display:flex;align-items:center;gap:.5rem;
+  }
+  .section-title .count{font-size:.8rem;color:var(--text-dim);font-weight:400}
+
+  /* Insights */
+  .insight-list{display:flex;flex-direction:column;gap:.75rem}
+  .insight-card{
+    background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);
+    padding:1.25rem;display:flex;gap:1rem;align-items:flex-start;
+  }
+  .insight-card .icon{font-size:1.3rem;flex-shrink:0;margin-top:2px}
+  .insight-card.warning{border-left:3px solid var(--red)}
+  .insight-card.positive{border-left:3px solid var(--green)}
+  .insight-card.info{border-left:3px solid var(--blue)}
+  .insight-card .title{font-weight:600;margin-bottom:.25rem}
+  .insight-card .desc{font-size:.85rem;color:var(--text-dim);line-height:1.6}
+  .insight-card .meta{font-size:.7rem;color:var(--text-muted);margin-top:.5rem}
+
+  /* Memory browser */
+  .memory-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:.75rem}
+  .memory-card{
+    background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);
+    padding:1rem;position:relative;transition:border-color .2s;
+  }
+  .memory-card:hover{border-color:rgba(255,255,255,0.1)}
+  .memory-card .key{font-weight:600;font-size:.9rem;margin-bottom:.3rem;color:var(--gold)}
+  .memory-card .val{font-size:.85rem;color:var(--text-dim)}
+  .memory-card .actions{position:absolute;top:.6rem;right:.6rem;display:none;gap:.3rem}
+  .memory-card:hover .actions{display:flex}
+  .memory-card .actions button{
+    background:var(--bg-hover);border:1px solid var(--border);color:var(--text-dim);
+    padding:.2rem .5rem;border-radius:4px;cursor:pointer;font-size:.7rem;
+  }
+  .memory-card .actions button:hover{color:var(--red);border-color:var(--red)}
+
+  /* Charts (simple bar) */
+  .chart-bars{display:flex;align-items:flex-end;gap:3px;height:120px}
+  .chart-bar{flex:1;background:var(--gold-bg);border-radius:3px 3px 0 0;min-height:2px;position:relative}
+  .chart-bar:hover{background:var(--gold)}
+  .chart-bar .tooltip{
+    display:none;position:absolute;bottom:100%;left:50%;transform:translateX(-50%);
+    background:var(--bg-hover);color:var(--text);padding:.3rem .6rem;border-radius:4px;
+    font-size:.75rem;white-space:nowrap;margin-bottom:4px;
+  }
+  .chart-bar:hover .tooltip{display:block}
+
+  /* Add memory form */
+  .add-form{display:flex;gap:.5rem;margin-top:1rem}
+  .add-form input{
+    flex:1;padding:.5rem .75rem;background:var(--bg);border:1px solid var(--border);
+    border-radius:8px;color:var(--text);font-size:.85rem
+  }
+  .add-form input:focus{outline:none;border-color:var(--gold)}
+  .add-form button{
+    padding:.5rem 1rem;background:var(--gold);color:var(--bg);border:none;
+    border-radius:8px;cursor:pointer;font-weight:500;font-size:.85rem
+  }
+  .add-form button:hover{background:var(--gold-bright)}
+
+  /* Chat panel */
+  .chat-panel{display:none}
+  .chat-panel.active{display:block}
+  .chat-messages{max-height:300px;overflow-y:auto;margin-bottom:1rem}
+  .chat-msg{padding:.75rem 1rem;margin-bottom:.5rem;border-radius:var(--radius);max-width:85%;font-size:.9rem}
+  .chat-msg.user{background:var(--gold-bg);margin-left:auto}
+  .chat-msg.agent{background:var(--bg-card);border:1px solid var(--border)}
+  .chat-input{display:flex;gap:.5rem}
+  .chat-input input{
+    flex:1;padding:.6rem .75rem;background:var(--bg);border:1px solid var(--border);
+    border-radius:8px;color:var(--text);font-size:.9rem
+  }
+  .chat-input button{
+    padding:.6rem 1.25rem;background:var(--gold);color:var(--bg);border:none;
+    border-radius:8px;cursor:pointer;font-weight:500
+  }
+
+  .hidden{display:none}
+  @media(max-width:768px){.sidebar{display:none}.stat-grid{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="logo">赛镜<span>Mirror</span></div>
+    <nav class="nav">
+      <a href="#" class="active" data-page="overview">📊 总览</a>
+      <a href="#" data-page="insights">💡 洞察 <span class="badge" id="insight-count">0</span></a>
+      <a href="#" data-page="memory">🧠 记忆 <span class="badge" id="memory-count">0</span></a>
+      <a href="#" data-page="chat">💬 对话</a>
+    </nav>
+    <div class="sidebar-footer">
+      <div>v0.2.0 · 演示模式</div>
+      <div style="font-size:.7rem;margin-top:.3rem;opacity:.6">数据为模拟生成</div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <!-- Overview Page -->
+    <div id="page-overview">
+      <div class="header">
+        <div>
+          <h1>早安，今天周三 ☀️</h1>
+          <div class="date" id="current-date"></div>
+        </div>
+        <div class="demo-badge">🪞 演示模式 · 30天数据</div>
+      </div>
+      <div class="stat-grid" id="stat-cards"></div>
+      <div class="section">
+        <div class="section-title">📈 最近7天睡眠趋势</div>
+        <div class="chart-bars" id="sleep-chart"></div>
+      </div>
+      <div class="section">
+        <div class="section-title">🏃 活动步数趋势</div>
+        <div class="chart-bars" id="steps-chart"></div>
+      </div>
+    </div>
+
+    <!-- Insights Page -->
+    <div id="page-insights" class="hidden">
+      <div class="header"><h1>💡 AI洞察</h1><div class="date">自动发现的模式和提醒</div></div>
+      <div class="stats" style="color:var(--text-dim);margin-bottom:1rem">
+        过去30天内，Mirror自动发现了 <strong style="color:var(--gold)" id="insight-total">0</strong> 条洞察。
+        这些不是我问出来的，是它自己发现的。
+      </div>
+      <div class="insight-list" id="insight-list"></div>
+    </div>
+
+    <!-- Memory Page -->
+    <div id="page-memory" class="hidden">
+      <div class="header">
+        <h1>🧠 记忆浏览器</h1>
+        <div class="date">Mirror记住的关于你的一切</div>
+      </div>
+      <p style="color:var(--text-dim);margin-bottom:1rem;font-size:.9rem">
+        这些是Mirror从对话和行为中学习到的偏好和事实。你可以编辑或删除任何一项——你的数据你做主。
+      </p>
+      <div class="memory-grid" id="memory-grid"></div>
+      <div class="section" style="margin-top:2rem">
+        <div class="section-title">➕ 手动添加</div>
+        <div class="add-form">
+          <input type="text" id="mem-key" placeholder="key（如：喜欢的运动）">
+          <input type="text" id="mem-val" placeholder="value（如：傍晚跑步）">
+          <button onclick="addMemory()">添加</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Chat Page -->
+    <div id="page-chat" class="hidden">
+      <div class="header"><h1>💬 对话</h1><div class="date" id="chat-status">未连接LLM</div></div>
+      <div class="chat-panel active">
+        <div class="chat-messages" id="chat-messages">
+          <div class="chat-msg agent">你好！我是赛镜 Mirror。问我任何事，或者试试："分析我这周的睡眠"</div>
+        </div>
+        <div class="chat-input">
+          <input type="text" id="chat-input" placeholder="输入消息..." onkeydown="if(event.key==='Enter')sendChat()">
+          <button onclick="sendChat()">发送</button>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+// ── Data Loading ────────────────────────────
+let insights=[],memory={},health=null;
+
+async function init(){
+  const [d,i,m]=await Promise.all([
+    fetch('/api/health').then(r=>r.json()),
+    fetch('/api/insights').then(r=>r.json()),
+    fetch('/api/memory').then(r=>r.json()),
+  ]);
+  health=d;insights=i;memory=m;
+  document.getElementById('insight-count').textContent=insights.length;
+  document.getElementById('memory-count').textContent=Object.keys(memory.preferences||{}).length;
+  document.getElementById('insight-total').textContent=insights.length;
+  renderOverview();renderInsights();renderMemory();
+}
+
+// ── Navigation ──────────────────────────────
+document.querySelectorAll('.nav a').forEach(a=>{
+  a.addEventListener('click',e=>{
+    e.preventDefault();
+    document.querySelectorAll('.nav a').forEach(x=>x.classList.remove('active'));
+    a.classList.add('active');
+    document.querySelectorAll('[id^="page-"]').forEach(p=>p.classList.add('hidden'));
+    document.getElementById('page-'+a.dataset.page).classList.remove('hidden');
+  });
+});
+
+// ── Overview ────────────────────────────────
+function renderOverview(){
+  document.getElementById('current-date').textContent=new Date().toLocaleDateString('zh-CN',{year:'numeric',month:'long',day:'numeric',weekday:'long'});
+  if(!health)return;
+
+  const s=health.sleep.slice(-7),st=health.steps.slice(-7);
+  const avgSleep=s.reduce((a,x)=>a+x.duration_hours,0)/s.length;
+  const avgSteps=st.reduce((a,x)=>a+x.steps,0)/st.length;
+  const avgHR=health.heart_rate.slice(-7).reduce((a,x)=>a+x.bpm,0)/7;
+  const screenAvg=health.screen_time.slice(-7).reduce((a,x)=>a+x.minutes,0)/7;
+
+  // Check trends
+  const prevS=health.sleep.slice(-14,-7);
+  const sleepTrend=prevS.length?((avgSleep-prevS.reduce((a,x)=>a+x.duration_hours,0)/prevS.length)/prevS.length*100).toFixed(0):0;
+
+  document.getElementById('stat-cards').innerHTML=`
+    <div class="stat-card"><div class="label">平均睡眠</div><div class="value">${avgSleep.toFixed(1)}<span style="font-size:1rem">h</span></div><div class="sub ${sleepTrend<0?'trend-down':'trend-up'}">${sleepTrend>0?'↑':'↓'} ${Math.abs(sleepTrend)}% vs上周</div></div>
+    <div class="stat-card"><div class="label">日均步数</div><div class="value">${Math.round(avgSteps).toLocaleString()}</div><div class="sub">目标: 8,000步</div></div>
+    <div class="stat-card"><div class="label">静息心率</div><div class="value">${Math.round(avgHR)}<span style="font-size:1rem">bpm</span></div><div class="sub">正常范围 60-75</div></div>
+    <div class="stat-card"><div class="label">屏幕时间</div><div class="value">${(screenAvg/60).toFixed(1)}<span style="font-size:1rem">h</span></div><div class="sub">日均</div></div>
+  `;
+
+  // Sleep chart
+  const maxS=Math.max(...s.map(x=>x.duration_hours));
+  document.getElementById('sleep-chart').innerHTML=s.map((x,i)=>{
+    const h=((x.duration_hours/maxS)*100).toFixed(0);
+    const d=new Date(x.date);const day=['日','一','二','三','四','五','六'][d.getDay()];
+    return `<div class="chart-bar" style="height:${h}%"><span class="tooltip">${x.date.slice(5)} 周${day}: ${x.duration_hours}h</span></div>`;
+  }).join('');
+
+  // Steps chart
+  const maxSt=Math.max(...st.map(x=>x.steps));
+  document.getElementById('steps-chart').innerHTML=st.map(x=>{
+    const h=((x.steps/maxSt)*100).toFixed(0);
+    return `<div class="chart-bar" style="height:${h}%"><span class="tooltip">${x.date.slice(5)}: ${x.steps.toLocaleString()}步</span></div>`;
+  }).join('');
+}
+
+// ── Insights ────────────────────────────────
+function renderInsights(){
+  const icons={warning:'⚠️',positive:'✨',info:'💡',critical:'🚨'};
+  document.getElementById('insight-list').innerHTML=insights.map(i=>`
+    <div class="insight-card ${i.severity}">
+      <div class="icon">${icons[i.severity]||'📌'}</div>
+      <div>
+        <div class="title">${i.title}</div>
+        <div class="desc">${i.description}</div>
+        <div class="meta">类别: ${i.category} · ${i.severity==='warning'?'需要关注':i.severity==='positive'?'好消息':'提示'}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ── Memory ──────────────────────────────────
+function renderMemory(){
+  const prefs=memory.preferences||{};
+  const keys=Object.keys(prefs);
+  if(keys.length===0){
+    document.getElementById('memory-grid').innerHTML='<div style="color:var(--text-dim);padding:2rem;text-align:center">还没有记忆。开始对话后，Mirror会自动学习你的偏好。</div>';
+    return;
+  }
+  document.getElementById('memory-grid').innerHTML=keys.map(k=>`
+    <div class="memory-card">
+      <div class="key">${k}</div>
+      <div class="val">${typeof prefs[k]==='object'?JSON.stringify(prefs[k]):prefs[k]}</div>
+      <div class="actions"><button onclick="deleteMemory('${k}')">删除</button></div>
+    </div>
+  `).join('');
+}
+
+async function deleteMemory(key){
+  await fetch('/api/memory/delete',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({key})});
+  location.reload();
+}
+async function addMemory(){
+  const k=document.getElementById('mem-key').value.trim();
+  const v=document.getElementById('mem-val').value.trim();
+  if(!k||!v)return;
+  await fetch('/api/memory/add',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({key:k,value:v})});
+  location.reload();
+}
+
+// ── Chat ──────────────────────────────────
+async function sendChat(){
+  const input=document.getElementById('chat-input');
+  const msg=input.value.trim();if(!msg)return;
+  const msgs=document.getElementById('chat-messages');
+  msgs.innerHTML+=`<div class="chat-msg user">${msg}</div>`;
+  input.value='';
+  const resp=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:msg})});
+  const data=await resp.json();
+  msgs.innerHTML+=`<div class="chat-msg agent">${data.response||'无响应'}</div>`;
+  msgs.scrollTop=msgs.scrollHeight;
+}
+
+// ── Start ──────────────────────────────────
+init();
+</script>
+</body>
+</html>
