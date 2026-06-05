@@ -39,6 +39,7 @@ dev = ["pytest>=7.0", "pytest-asyncio>=0.21"]
 
 [project.scripts]
 mirror = "mirror.cli.main:app"
+mirror-dashboard = "mirror.web.server:main"
 
 [tool.setuptools.packages.find]
 include = ["mirror*"]
