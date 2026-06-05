@@ -1,0 +1,44 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.backends._legacy:_Backend"
+
+[project]
+name = "mirror-agent"
+version = "0.1.0"
+description = "Mirror: An open-source, self-evolving personal AI agent. Like a cyber mirror that helps you see yourself clearly."
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.10"
+authors = [
+    {name = "Mirror Contributors"}
+]
+keywords = ["ai-agent", "self-evolving", "personal-ai", "llm", "agent"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+
+dependencies = [
+    "openai>=1.0",
+    "chromadb>=0.4",
+    "pydantic>=2.0",
+    "rich>=13.0",
+    "typer>=0.9",
+    "pyyaml>=6.0",
+    "httpx>=0.25",
+]
+
+[project.optional-dependencies]
+local = ["ollama>=0.1"]
+dev = ["pytest>=7.0", "pytest-asyncio>=0.21"]
+
+[project.scripts]
+mirror = "mirror.cli.main:app"
+
+[tool.setuptools.packages.find]
+include = ["mirror*"]
