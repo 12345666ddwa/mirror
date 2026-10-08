@@ -1,8 +1,10 @@
-# 🪞 赛镜 Mirror
+# 🪞 Mirror (赛镜)
 
-> 一面赛博镜子，照见真实的自己。
+> A cyber mirror that reflects the real you. · 一面赛博镜子，照见真实的自己。
 
-**Mirror** 是一个开源、本地优先、自进化的个人 AI Agent。它会学习你的行为、记住你的偏好、进化自己的能力——越用越懂你，越用越强大。
+**Mirror** is an open-source, local-first, self-evolving personal AI agent. It learns your behavior, remembers your preferences and grows its own capabilities — the more you use it, the better it knows you.
+
+[中文说明](README.zh.md)
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
@@ -10,110 +12,106 @@
 
 ---
 
-## 🎯 为什么是 Mirror？
+## 🎯 Why Mirror?
 
-| | 普通 AI 助手 | **赛镜 Mirror** |
+| | Typical AI assistant | **Mirror** |
 |:--|:-----------|:--------------|
-| 能力 | 固定，出厂即上限 | **自进化**，越用越强 |
-| 记忆 | 聊天记录 | **人格模型**：偏好、习惯、思维模式 |
-| 隐私 | 数据上传云端 | **本地优先**，支持 Ollama |
-| 定制 | Prompt 调参 | **工具自合成**，不会的技能当场学 |
-| 开源 | — | **MIT 协议**，完全透明 |
+| Capability | Fixed at release | **Self-evolving** — grows with use |
+| Memory | Chat history | **Personality model**: preferences, habits, thinking patterns |
+| Privacy | Data uploaded to the cloud | **Local-first**, Ollama supported |
+| Customization | Prompt tuning | **Tool self-synthesis** — learns missing skills on the spot |
+| Openness | — | **MIT**, fully transparent |
 
-## 🧠 核心机制：自进化
+## 🧠 Core mechanism: self-evolution
 
 ```
-第1天                    第7天                    第30天
-0个工具 ──────────────→ 学会查天气/设闹钟 ──────→ 分析睡眠/生成周报/主动建议
-只能聊天                  开始有用                  不可替代
+Day 1                    Day 7                       Day 30
+0 tools ──────────────→ learns weather/alarms ────→ sleep analysis / weekly reports / proactive suggestions
+chat only                starts to be useful         irreplaceable
 ```
 
-**Yunjue Agent 论文已经证明了"自进化"的可行性。** Mirror 在此基础上做了三个关键差异化：
+The *Yunjue Agent* paper proved the feasibility of "self-evolution". Mirror builds on it with three key differentiators:
 
-1. **不只是工具进化** — 工具 + 记忆 + 偏好 + 工作流，全维度进化
-2. **个人化** — 构建关于你的结构化模型，而非通用Agent
-3. **极简部署** — 一行 `pip install`，5 分钟跑起来
+1. **Not just tools** — tools + memory + preferences + workflows, evolving across every dimension
+2. **Personal** — constructs a structured model of *you*, not a generic agent
+3. **Minimal deployment** — one `pip install`, running in 5 minutes
 
-## 🚀 快速开始
+## 🚀 Quick start
 
 ```bash
-# 安装
+# Install
 pip install mirror-agent
 
-# 初始化
+# Initialize
 mirror start
 
-# 从零开始 — Mirror 什么都不会，但会逐渐学会一切
+# Start from zero — Mirror knows nothing, but will gradually learn everything
 ```
 
 ```
 🚀 Mirror v0.1.0
-模型: gpt-4o
-工具库: 0 个工具
-交互次数: 0
-EGL: ∞ (未进化)
+model: gpt-4o
+tools: 0
+interactions: 0
+EGL: ∞ (not yet evolved)
 
-你: 帮我查一下杭州明天的天气
-赛镜: 我没有天气查询工具，让我创造一个……
-       ✓ 新工具: get_weather 已合成
-       杭州明天 18-26°C，多云转晴 ☁️→☀️
+you:  check tomorrow's weather in Hangzhou
+Mirror: I don't have a weather tool — let me create one...
+        ✓ new tool: get_weather synthesized
+        Hangzhou tomorrow 18–26°C, cloudy turning sunny ☁️→☀️
 
-你: 明天适合跑步吗？
-赛镜: 根据你之前的偏好（你喜欢傍晚跑步）和明天的天气……
-       建议 17:00-18:00，温度舒适，风速低。
+you:  good day for a run?
+Mirror: based on your preference (you like evening runs) and tomorrow's weather...
+        suggested window 17:00–18:00 — comfortable temperature, low wind.
 ```
 
-## 📐 架构
+## 📐 Architecture
 
 ```
 ┌─────────────────────────────────────────┐
 │              Mirror Agent               │
 │                                         │
-│  ┌─────────┐   ┌───────────────┐       │
-│  │ Manager │──→│ Tool Developer │       │
-│  │ (调度)   │   │ (合成新工具)    │       │
-│  └────┬─────┘   └───────────────┘       │
+│  ┌─────────┐   ┌────────────────┐      │
+│  │ Manager │──→│ Tool Developer │      │
+│  │(dispatch)│  │  (synthesize)  │      │
+│  └────┬────┘   └────────────────┘      │
 │       │                                  │
-│  ┌────▼─────┐   ┌───────────────┐       │
-│  │ Executor │──→│  Integrator   │       │
-│  │ (ReAct)  │   │  (合成回复)    │       │
-│  └──────────┘   └───────────────┘       │
+│  ┌────▼────┐   ┌────────────────┐      │
+│  │Executor │──→│   Integrator   │      │
+│  │ (ReAct) │   │ (compose reply)│      │
+│  └─────────┘   └────────────────┘      │
 │                                         │
 │  ┌──────────────────────────────────┐  │
-│  │         Memory Layer             │  │
-│  │  • 偏好模型  • 人格模型  • 记忆   │  │
+│  │           Memory Layer           │  │
+│  │  • preference model  • personality│ │
+│  │  • memory                         │ │
 │  └──────────────────────────────────┘  │
 │                                         │
 │  ┌──────────────────────────────────┐  │
-│  │      Sensor Integration          │  │
+│  │        Sensor Integration        │  │
 │  │  • Apple Health  • Google Fit    │  │
 │  └──────────────────────────────────┘  │
 └─────────────────────────────────────────┘
 ```
 
-## 🗺️ 路线图
+## 🗺️ Roadmap
 
-- [x] **v0.1.0** — 核心引擎：Agent + 工具自合成 + 沙箱
-- [ ] **v0.2.0** — LLM 集成（OpenAI / Anthropic / Ollama）
-- [ ] **v0.3.0** — 记忆层 + 偏好学习
-- [ ] **v0.4.0** — 健康数据接入（Apple Health / Google Fit）
-- [ ] **v0.5.0** — Web UI + 对话界面
-- [ ] **v1.0.0** — 稳定API + 完整文档 + Skills 市场
+- [x] **v0.1.0** — core engine: agent + tool self-synthesis + sandbox
+- [ ] **v0.2.0** — LLM integrations (OpenAI / Anthropic / Ollama)
+- [ ] **v0.3.0** — memory layer + preference learning
+- [ ] **v0.4.0** — health data (Apple Health / Google Fit)
+- [ ] **v0.5.0** — web UI + chat interface
+- [ ] **v1.0.0** — stable API + full docs + skills marketplace
 
-## 🤝 贡献
+## 🤝 Contributing
 
-Mirror 处于早期阶段，欢迎各种形式的贡献：
+Mirror is at an early stage — bug reports, feature ideas, documentation and PRs are all welcome.
 
-- 🐛 报告 Bug
-- 💡 提出新功能
-- 📝 改进文档
-- 🔧 提交 PR
+See [CONTRIBUTING.md](CONTRIBUTING.md).
 
-详见 [CONTRIBUTING.md](CONTRIBUTING.md)
+## 📄 License
 
-## 📄 协议
-
-MIT License — 随意使用、修改、分发。
+MIT License — use, modify and distribute freely.
 
 ---
 
